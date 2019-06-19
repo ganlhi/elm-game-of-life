@@ -42,19 +42,24 @@ init _ =
 
 initialModel : Model
 initialModel =
+    let
+        params =
+            { autorunSpeed = 0
+            , showPredictions = False
+            , gridSize = ( 10, 10 )
+            }
+    in
     { generation = 0
-    , board = makeStartingBoard
+    , board = makeStartingBoard params.gridSize
     , params =
-        { autorunSpeed = 0
-        , showPredictions = False
-        }
+        params
     }
 
 
-makeStartingBoard : Board
-makeStartingBoard =
+makeStartingBoard : ( Int, Int ) -> Board
+makeStartingBoard ( width, height ) =
     -- as an example, generate a 10x10 board with an Octagon2 pulser in the middle
-    makeBoard 10 10 [ ( 4, 1 ), ( 5, 1 ), ( 3, 2 ), ( 6, 2 ), ( 2, 3 ), ( 7, 3 ), ( 1, 4 ), ( 8, 4 ), ( 1, 5 ), ( 8, 5 ), ( 2, 6 ), ( 7, 6 ), ( 3, 7 ), ( 6, 7 ), ( 4, 8 ), ( 5, 8 ) ]
+    makeBoard width height (positionModel ( 1, 1 ) octagon2)
 
 
 
@@ -218,6 +223,11 @@ setCellType alivePositions x y =
         Dead
 
 
+positionModel : ( Int, Int ) -> List ( Int, Int ) -> List ( Int, Int )
+positionModel ( x0, y0 ) model =
+    List.map (\( x, y ) -> ( x + x0, y + y0 )) model
+
+
 
 -- GAME LOGIC
 
@@ -225,6 +235,7 @@ setCellType alivePositions x y =
 type alias Params =
     { autorunSpeed : Int
     , showPredictions : Bool
+    , gridSize : ( Int, Int )
     }
 
 
@@ -280,3 +291,11 @@ getBoardRows board =
     rowsIndices
         |> List.map (\r -> Matrix.getRow r board)
         |> List.map mapRowResultToRow
+
+
+
+-- MODELS
+
+
+octagon2 =
+    [ ( 3, 0 ), ( 4, 0 ), ( 2, 1 ), ( 5, 1 ), ( 1, 2 ), ( 6, 2 ), ( 0, 3 ), ( 7, 3 ), ( 0, 4 ), ( 7, 4 ), ( 1, 5 ), ( 6, 5 ), ( 2, 6 ), ( 5, 6 ), ( 3, 7 ), ( 4, 7 ) ]
