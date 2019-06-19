@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "elm-live src/Main.elm -d public -- --output=public/main.js",
+    "start": "elm-live src/Main.elm -d public -- --output=public/main.js --debug",
     "build": "elm make src/Main.elm --output=public/main.js --optimize",
     "minify": "elm-minify public/main.js --overwrite",
     "deploy": "npm run build && npm run minify && gh-pages -d public"

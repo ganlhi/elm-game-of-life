@@ -3,9 +3,12 @@ module Main exposing (main)
 import Array exposing (Array)
 import Browser
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Matrix exposing (Matrix)
 import Neighbours exposing (MatrixTopology(..), neighbours)
+import Task
+import Time
 
 
 
@@ -14,7 +17,7 @@ import Neighbours exposing (MatrixTopology(..), neighbours)
 
 main : Program () Model Msg
 main =
-    Browser.sandbox { init = initialModel, view = view, update = update }
+    Browser.element { init = init, view = view, update = update, subscriptions = subscriptions }
 
 
 
@@ -22,16 +25,22 @@ main =
 
 
 type alias Model =
-    { generation : Int, board : Board }
+    { generation : Int, autorun : Bool, board : Board }
 
 
 type Msg
     = Evolve
+    | Autorun Bool
+
+
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( initialModel, Cmd.none )
 
 
 initialModel : Model
 initialModel =
-    { generation = 0, board = makeStartingBoard }
+    { generation = 0, autorun = False, board = makeStartingBoard }
 
 
 makeStartingBoard : Board
@@ -45,18 +54,19 @@ makeStartingBoard =
 
 
 view : Model -> Html Msg
-view { generation, board } =
+view model =
     div []
-        [ viewToolbar generation
-        , viewBoard board
+        [ viewToolbar model
+        , viewBoard model.board
         ]
 
 
-viewToolbar : Int -> Html Msg
-viewToolbar generation =
+viewToolbar : Model -> Html Msg
+viewToolbar { generation, autorun } =
     header []
         [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
-        , button [ onClick Evolve ] [ text "Evolve!" ]
+        , button [ onClick Evolve, disabled autorun ] [ text "Evolve!" ]
+        , label [] [ input [ type_ "checkbox", onCheck Autorun ] [], text "Autorun" ]
         ]
 
 
@@ -102,11 +112,28 @@ viewCell cell =
 -- UPDATE
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Evolve ->
-            { model | generation = model.generation + 1, board = evolve model.board }
+            ( { model | generation = model.generation + 1, board = evolve model.board }, Cmd.none )
+
+        Autorun run ->
+            ( { model | autorun = run }, Cmd.none )
+
+
+
+-- COMMANDS AND TASKS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions { autorun } =
+    case autorun of
+        True ->
+            Time.every 1000 (\_ -> Evolve)
+
+        False ->
+            Sub.none
 
 
 
