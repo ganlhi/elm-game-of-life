@@ -1,0 +1,29 @@
+{
+  "name": "elm-game-of-life",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "elm-live src/Main.elm -d public -- --output=public/main.js",
+    "build": "elm make src/Main.elm --output=public/main.js --optimize",
+    "minify": "elm-minify public/main.js --overwrite",
+    "deploy": "npm run build && npm run minify && gh-pages -d public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ganlhi/elm-game-of-life.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ganlhi/elm-game-of-life/issues"
+  },
+  "homepage": "https://github.com/ganlhi/elm-game-of-life#readme",
+  "devDependencies": {
+    "elm": "^0.19.0-no-deps",
+    "elm-live": "^3.4.1",
+    "elm-minify": "^2.0.4",
+    "gh-pages": "^2.0.1"
+  }
+}
