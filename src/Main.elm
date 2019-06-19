@@ -34,6 +34,12 @@ initialModel =
     { generation = 0, board = makeStartingBoard }
 
 
+makeStartingBoard : Board
+makeStartingBoard =
+    -- as an example, generate a 10x10 board with an Octagon2 pulser in the middle
+    makeBoard 10 10 [ ( 4, 1 ), ( 5, 1 ), ( 3, 2 ), ( 6, 2 ), ( 2, 3 ), ( 7, 3 ), ( 1, 4 ), ( 8, 4 ), ( 1, 5 ), ( 8, 5 ), ( 2, 6 ), ( 7, 6 ), ( 3, 7 ), ( 6, 7 ), ( 4, 8 ), ( 5, 8 ) ]
+
+
 
 -- VIEW
 
@@ -66,6 +72,7 @@ viewBoard board =
                 |> List.map
                     (\r ->
                         case r of
+                            -- should not ever happen, but if it does, fail gracefully by replacing with a row of dead cells
                             Err _ ->
                                 List.repeat (Matrix.width board) Dead
 
@@ -104,11 +111,6 @@ update msg model =
 
 
 -- BUILD BOARD
-
-
-makeStartingBoard : Board
-makeStartingBoard =
-    makeBoard 10 10 [ ( 4, 1 ), ( 5, 1 ), ( 3, 2 ), ( 6, 2 ), ( 2, 3 ), ( 7, 3 ), ( 1, 4 ), ( 8, 4 ), ( 1, 5 ), ( 8, 5 ), ( 2, 6 ), ( 7, 6 ), ( 3, 7 ), ( 6, 7 ), ( 4, 8 ), ( 5, 8 ) ]
 
 
 makeBoard : Int -> Int -> List ( Int, Int ) -> Board
