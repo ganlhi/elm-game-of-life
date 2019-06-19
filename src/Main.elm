@@ -41,9 +41,16 @@ initialModel =
 view : Model -> Html Msg
 view { generation, board } =
     div []
-        [ text ("Generation #" ++ String.fromInt generation)
-        , button [ onClick Evolve ] [ text "Evolve!" ]
+        [ viewToolbar generation
         , viewBoard board
+        ]
+
+
+viewToolbar : Int -> Html Msg
+viewToolbar generation =
+    header []
+        [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
+        , button [ onClick Evolve ] [ text "Evolve!" ]
         ]
 
 
@@ -54,7 +61,7 @@ viewBoard board =
             Matrix.height board
 
         rows =
-            List.range 0 height
+            List.range 0 (height - 1)
                 |> List.map (\r -> Matrix.getRow r board)
                 |> List.map
                     (\r ->
