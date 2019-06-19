@@ -3,8 +3,8 @@ module Main exposing (main)
 import Array exposing (Array)
 import Browser
 import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Html.Attributes as Attr
+import Html.Events as Events
 import Matrix exposing (Matrix)
 import Neighbours exposing (MatrixTopology(..), neighbours)
 import Task
@@ -65,8 +65,8 @@ viewToolbar : Model -> Html Msg
 viewToolbar { generation, autorun } =
     header []
         [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
-        , button [ onClick Evolve, disabled autorun ] [ text "Evolve!" ]
-        , label [] [ input [ type_ "checkbox", onCheck Autorun ] [], text "Autorun" ]
+        , button [ Events.onClick Evolve, Attr.disabled autorun ] [ text "Evolve!" ]
+        , label [] [ input [ Attr.type_ "checkbox", Events.onCheck Autorun ] [], text "Autorun" ]
         ]
 
 
