@@ -33,6 +33,7 @@ type Msg
     | Reset
     | SetSpeed Int
     | ShowPredictions Bool
+    | SetGridSize ( Int, Int )
 
 
 init : () -> ( Model, Cmd Msg )
@@ -75,7 +76,7 @@ view { generation, params, board } =
 
 
 viewToolbar : Int -> Params -> Html Msg
-viewToolbar generation { autorunSpeed, showPredictions } =
+viewToolbar generation { autorunSpeed, showPredictions, gridSize } =
     header []
         [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
         , button [ Events.onClick Evolve, Attr.disabled (autorunSpeed > 0) ]
@@ -84,6 +85,7 @@ viewToolbar generation { autorunSpeed, showPredictions } =
             [ text "Reset" ]
         , viewSpeedSelector autorunSpeed
         , viewShowPredictionCheckbox showPredictions
+        , viewGridSizeControls gridSize
         ]
 
 
@@ -113,6 +115,22 @@ viewShowPredictionCheckbox show =
     label []
         [ input [ Attr.type_ "checkbox", Attr.checked show, Events.onCheck ShowPredictions ] []
         , text "Show predictions"
+        ]
+
+
+viewGridSizeControls : ( Int, Int ) -> Html Msg
+viewGridSizeControls ( width, height ) =
+    div []
+        [ div []
+            [ button [ Events.onClick (SetGridSize ( width - 1, height )) ] [ text "-" ]
+            , span [] [ text ("width: " ++ String.fromInt width) ]
+            , button [ Events.onClick (SetGridSize ( width + 1, height )) ] [ text "+" ]
+            ]
+        , div []
+            [ button [ Events.onClick (SetGridSize ( width, height - 1 )) ] [ text "-" ]
+            , span [] [ text ("height: " ++ String.fromInt height) ]
+            , button [ Events.onClick (SetGridSize ( width, height + 1 )) ] [ text "+" ]
+            ]
         ]
 
 
@@ -180,6 +198,15 @@ update msg model =
             , Cmd.none
             )
 
+        SetGridSize size ->
+            let
+                newParams =
+                    model.params |> setGridSize size
+            in
+            ( { model | params = newParams, board = resize newParams.gridSize model.board }
+            , Cmd.none
+            )
+
 
 setAutorunSpeed : Int -> Params -> Params
 setAutorunSpeed speed params =
@@ -189,6 +216,16 @@ setAutorunSpeed speed params =
 setShowPredictions : Bool -> Params -> Params
 setShowPredictions show params =
     { params | showPredictions = show }
+
+
+setGridSize : ( Int, Int ) -> Params -> Params
+setGridSize ( w, h ) params =
+    { params | gridSize = ( clampSize w, clampSize h ) }
+
+
+clampSize : Int -> Int
+clampSize =
+    clamp 0 100
 
 
 
@@ -226,6 +263,21 @@ setCellType alivePositions x y =
 positionModel : ( Int, Int ) -> List ( Int, Int ) -> List ( Int, Int )
 positionModel ( x0, y0 ) model =
     List.map (\( x, y ) -> ( x + x0, y + y0 )) model
+
+
+resize : ( Int, Int ) -> Board -> Board
+resize ( width, height ) board =
+    Matrix.generate width height (copyFrom board)
+
+
+copyFrom : Board -> Int -> Int -> Cell
+copyFrom origin x y =
+    case Matrix.get x y origin of
+        Err _ ->
+            Dead
+
+        Ok cell ->
+            cell
 
 
 
