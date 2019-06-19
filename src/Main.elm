@@ -30,6 +30,7 @@ type alias Model =
 
 type Msg
     = Evolve
+    | Reset
     | SetSpeed Int
 
 
@@ -73,6 +74,8 @@ viewToolbar generation { autorunSpeed } =
         [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
         , button [ Events.onClick Evolve, Attr.disabled (autorunSpeed > 0) ]
             [ text "Evolve!" ]
+        , button [ Events.onClick Reset ]
+            [ text "Reset" ]
         , viewSpeedSelector autorunSpeed
         ]
 
@@ -143,6 +146,9 @@ viewCell cell =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Reset ->
+            ( initialModel, Cmd.none )
+
         Evolve ->
             ( { model | generation = model.generation + 1, board = evolve model.board }, Cmd.none )
 
