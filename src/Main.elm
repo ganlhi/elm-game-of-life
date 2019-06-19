@@ -32,6 +32,7 @@ type Msg
     = Evolve
     | Reset
     | SetSpeed Int
+    | ShowPredictions Bool
 
 
 init : () -> ( Model, Cmd Msg )
@@ -64,12 +65,12 @@ view : Model -> Html Msg
 view { generation, params, board } =
     div []
         [ viewToolbar generation params
-        , viewBoard board
+        , viewBoard board params.showPredictions
         ]
 
 
 viewToolbar : Int -> Params -> Html Msg
-viewToolbar generation { autorunSpeed } =
+viewToolbar generation { autorunSpeed, showPredictions } =
     header []
         [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
         , button [ Events.onClick Evolve, Attr.disabled (autorunSpeed > 0) ]
@@ -77,6 +78,7 @@ viewToolbar generation { autorunSpeed } =
         , button [ Events.onClick Reset ]
             [ text "Reset" ]
         , viewSpeedSelector autorunSpeed
+        , viewShowPredictionCheckbox showPredictions
         ]
 
 
@@ -101,42 +103,53 @@ viewSpeedRadioButton value isChecked =
         ]
 
 
-viewBoard : Board -> Html Msg
-viewBoard board =
+viewShowPredictionCheckbox : Bool -> Html Msg
+viewShowPredictionCheckbox show =
+    label []
+        [ input [ Attr.type_ "checkbox", Attr.checked show, Events.onCheck ShowPredictions ] []
+        , text "Show predictions"
+        ]
+
+
+viewBoard : Board -> Bool -> Html Msg
+viewBoard board showPredictions =
     let
-        height =
-            Matrix.height board
-
         rows =
-            List.range 0 (height - 1)
-                |> List.map (\r -> Matrix.getRow r board)
-                |> List.map
-                    (\r ->
-                        case r of
-                            -- should not ever happen, but if it does, fail gracefully by replacing with a row of dead cells
-                            Err _ ->
-                                List.repeat (Matrix.width board) Dead
+            board |> getBoardRows
 
-                            Ok cells ->
-                                Array.toList cells
-                    )
+        futureRows =
+            if not showPredictions then
+                rows
+
+            else
+                evolve board |> getBoardRows
     in
-    rows |> List.map viewBoardRow |> table []
+    List.map2 viewBoardRow rows futureRows |> table []
 
 
-viewBoardRow : List Cell -> Html Msg
-viewBoardRow cells =
-    cells |> List.map viewCell |> tr []
+viewBoardRow : List Cell -> List Cell -> Html Msg
+viewBoardRow cells futureCells =
+    List.map2 viewCell cells futureCells |> tr []
 
 
-viewCell : Cell -> Html Msg
-viewCell cell =
-    case cell of
-        Alive ->
-            td [] [ text "●" ]
+viewCell : Cell -> Cell -> Html Msg
+viewCell current future =
+    let
+        ( char, cls ) =
+            case ( current, future ) of
+                ( Alive, Alive ) ->
+                    ( "●", "" )
 
-        Dead ->
-            td [] [ text " " ]
+                ( Dead, Dead ) ->
+                    ( "", "" )
+
+                ( Alive, Dead ) ->
+                    ( "●", "prediction" )
+
+                ( Dead, Alive ) ->
+                    ( "◌", "prediction" )
+    in
+    td [ Attr.class cls ] [ text char ]
 
 
 
@@ -153,14 +166,24 @@ update msg model =
             ( { model | generation = model.generation + 1, board = evolve model.board }, Cmd.none )
 
         SetSpeed speed ->
-            let
-                params =
-                    model.params
+            ( { model | params = model.params |> setAutorunSpeed speed }
+            , Cmd.none
+            )
 
-                newParams =
-                    { params | autorunSpeed = speed }
-            in
-            ( { model | params = newParams }, Cmd.none )
+        ShowPredictions show ->
+            ( { model | params = model.params |> setShowPredictions show }
+            , Cmd.none
+            )
+
+
+setAutorunSpeed : Int -> Params -> Params
+setAutorunSpeed speed params =
+    { params | autorunSpeed = speed }
+
+
+setShowPredictions : Bool -> Params -> Params
+setShowPredictions show params =
+    { params | showPredictions = show }
 
 
 
@@ -234,3 +257,26 @@ evolveCell board x y cell =
 evolve : Board -> Board
 evolve board =
     board |> Matrix.indexedMap (evolveCell board)
+
+
+getBoardRows : Board -> List (List Cell)
+getBoardRows board =
+    let
+        height =
+            Matrix.height board
+
+        rowsIndices =
+            List.range 0 (height - 1)
+
+        mapRowResultToRow r =
+            case r of
+                -- should not ever happen, but if it does, fail gracefully by replacing with a row of dead cells
+                Err _ ->
+                    List.repeat (Matrix.width board) Dead
+
+                Ok cells ->
+                    Array.toList cells
+    in
+    rowsIndices
+        |> List.map (\r -> Matrix.getRow r board)
+        |> List.map mapRowResultToRow
