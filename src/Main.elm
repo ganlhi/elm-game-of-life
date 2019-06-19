@@ -25,12 +25,12 @@ main =
 
 
 type alias Model =
-    { generation : Int, autorun : Bool, board : Board }
+    { generation : Int, params : Params, board : Board }
 
 
 type Msg
     = Evolve
-    | Autorun Bool
+    | SetSpeed Int
 
 
 init : () -> ( Model, Cmd Msg )
@@ -40,7 +40,13 @@ init _ =
 
 initialModel : Model
 initialModel =
-    { generation = 0, autorun = False, board = makeStartingBoard }
+    { generation = 0
+    , board = makeStartingBoard
+    , params =
+        { autorunSpeed = 0
+        , showPredictions = False
+        }
+    }
 
 
 makeStartingBoard : Board
@@ -54,19 +60,41 @@ makeStartingBoard =
 
 
 view : Model -> Html Msg
-view model =
+view { generation, params, board } =
     div []
-        [ viewToolbar model
-        , viewBoard model.board
+        [ viewToolbar generation params
+        , viewBoard board
         ]
 
 
-viewToolbar : Model -> Html Msg
-viewToolbar { generation, autorun } =
+viewToolbar : Int -> Params -> Html Msg
+viewToolbar generation { autorunSpeed } =
     header []
         [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
-        , button [ Events.onClick Evolve, Attr.disabled autorun ] [ text "Evolve!" ]
-        , label [] [ input [ Attr.type_ "checkbox", Events.onCheck Autorun ] [], text "Autorun" ]
+        , button [ Events.onClick Evolve, Attr.disabled (autorunSpeed > 0) ]
+            [ text "Evolve!" ]
+        , viewSpeedSelector autorunSpeed
+        ]
+
+
+viewSpeedSelector : Int -> Html Msg
+viewSpeedSelector speed =
+    div []
+        [ label [] [ text "Autorun speed" ]
+        , viewSpeedRadioButton 0 (speed == 0)
+        , viewSpeedRadioButton 1 (speed == 1)
+        , viewSpeedRadioButton 2 (speed == 2)
+        , viewSpeedRadioButton 5 (speed == 5)
+        , viewSpeedRadioButton 10 (speed == 10)
+        ]
+
+
+viewSpeedRadioButton : Int -> Bool -> Html Msg
+viewSpeedRadioButton value isChecked =
+    label
+        []
+        [ input [ Attr.type_ "radio", Attr.name "autorunSpeed", Events.onInput (\_ -> SetSpeed value), Attr.checked isChecked ] []
+        , text (String.fromInt value)
         ]
 
 
@@ -118,8 +146,15 @@ update msg model =
         Evolve ->
             ( { model | generation = model.generation + 1, board = evolve model.board }, Cmd.none )
 
-        Autorun run ->
-            ( { model | autorun = run }, Cmd.none )
+        SetSpeed speed ->
+            let
+                params =
+                    model.params
+
+                newParams =
+                    { params | autorunSpeed = speed }
+            in
+            ( { model | params = newParams }, Cmd.none )
 
 
 
@@ -127,13 +162,13 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions { autorun } =
-    case autorun of
-        True ->
-            Time.every 1000 (\_ -> Evolve)
-
-        False ->
+subscriptions { params } =
+    case params.autorunSpeed of
+        0 ->
             Sub.none
+
+        speed ->
+            Time.every (1000 / toFloat speed) (\_ -> Evolve)
 
 
 
@@ -156,6 +191,12 @@ setCellType alivePositions x y =
 
 
 -- GAME LOGIC
+
+
+type alias Params =
+    { autorunSpeed : Int
+    , showPredictions : Bool
+    }
 
 
 type Cell
