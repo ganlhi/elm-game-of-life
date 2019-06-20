@@ -16,6 +16,10 @@ td.prediction {
   color: #afafaf;
 }
 
+td.highlight {
+  background-color: lightcyan;
+}
+
 header {
   margin-bottom: 10px;
 }

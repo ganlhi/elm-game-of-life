@@ -25,7 +25,7 @@ main =
 
 
 type alias Model =
-    { generation : Int, params : Params, board : Board }
+    { generation : Int, params : Params, board : Board, cursor : Maybe ( Int, Int ) }
 
 
 type Msg
@@ -34,6 +34,7 @@ type Msg
     | SetSpeed Int
     | ShowPredictions Bool
     | SetGridSize ( Int, Int )
+    | SetCursor ( Int, Int )
 
 
 init : () -> ( Model, Cmd Msg )
@@ -52,8 +53,8 @@ initialModel =
     in
     { generation = 0
     , board = makeStartingBoard params.gridSize
-    , params =
-        params
+    , params = params
+    , cursor = Nothing
     }
 
 
@@ -68,10 +69,10 @@ makeStartingBoard ( width, height ) =
 
 
 view : Model -> Html Msg
-view { generation, params, board } =
+view { generation, params, board, cursor } =
     div []
         [ viewToolbar generation params
-        , viewBoard board params.showPredictions
+        , viewBoard board params.showPredictions cursor
         ]
 
 
@@ -134,22 +135,22 @@ viewGridSizeControls ( width, height ) =
         ]
 
 
-viewBoard : Board -> Bool -> Html Msg
-viewBoard board showPredictions =
+viewBoard : Board -> Bool -> Maybe ( Int, Int ) -> Html Msg
+viewBoard board showPredictions cursor =
     let
         rows =
             board |> getBoardRowsWithFuture showPredictions
     in
-    List.map viewBoardRow rows |> table []
+    List.map (viewBoardRow cursor) rows |> table []
 
 
-viewBoardRow : List CellWithFutureAndPosition -> Html Msg
-viewBoardRow cells =
-    List.map viewCell cells |> tr []
+viewBoardRow : Maybe ( Int, Int ) -> List CellWithFutureAndPosition -> Html Msg
+viewBoardRow cursor cells =
+    List.map (viewCell cursor) cells |> tr []
 
 
-viewCell : CellWithFutureAndPosition -> Html Msg
-viewCell ( ( x, y ), current, future ) =
+viewCell : Maybe ( Int, Int ) -> CellWithFutureAndPosition -> Html Msg
+viewCell cursor ( ( x, y ), current, future ) =
     let
         ( char, cls ) =
             case ( current, future ) of
@@ -165,10 +166,22 @@ viewCell ( ( x, y ), current, future ) =
                 ( Dead, Alive ) ->
                     ( "◌", "prediction" )
 
+        highlightCls =
+            case cursor of
+                Nothing ->
+                    ""
+
+                Just coords ->
+                    if coords == ( x, y ) then
+                        "highlight"
+
+                    else
+                        ""
+
         tooltip =
             String.fromInt x ++ ", " ++ String.fromInt y
     in
-    td [ Attr.class cls, Attr.title tooltip ] [ text char ]
+    td [ Attr.class (String.join " " [ cls, highlightCls ]), Attr.title tooltip, Events.onClick (SetCursor ( x, y )) ] [ text char ]
 
 
 
@@ -202,6 +215,9 @@ update msg model =
             ( { model | params = newParams, board = resize newParams.gridSize model.board }
             , Cmd.none
             )
+
+        SetCursor cursorPos ->
+            ( { model | cursor = Just cursorPos }, Cmd.none )
 
 
 setAutorunSpeed : Int -> Params -> Params
