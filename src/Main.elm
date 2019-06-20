@@ -138,25 +138,18 @@ viewBoard : Board -> Bool -> Html Msg
 viewBoard board showPredictions =
     let
         rows =
-            board |> getBoardRows
-
-        futureRows =
-            if not showPredictions then
-                rows
-
-            else
-                evolve board |> getBoardRows
+            board |> getBoardRowsWithFuture showPredictions
     in
-    List.map2 viewBoardRow rows futureRows |> table []
+    List.map viewBoardRow rows |> table []
 
 
-viewBoardRow : List Cell -> List Cell -> Html Msg
-viewBoardRow cells futureCells =
-    List.map2 viewCell cells futureCells |> tr []
+viewBoardRow : List CellWithFutureAndPosition -> Html Msg
+viewBoardRow cells =
+    List.map viewCell cells |> tr []
 
 
-viewCell : Cell -> Cell -> Html Msg
-viewCell current future =
+viewCell : CellWithFutureAndPosition -> Html Msg
+viewCell ( ( x, y ), current, future ) =
     let
         ( char, cls ) =
             case ( current, future ) of
@@ -171,8 +164,11 @@ viewCell current future =
 
                 ( Dead, Alive ) ->
                     ( "◌", "prediction" )
+
+        tooltip =
+            String.fromInt x ++ ", " ++ String.fromInt y
     in
-    td [ Attr.class cls ] [ text char ]
+    td [ Attr.class cls, Attr.title tooltip ] [ text char ]
 
 
 
@@ -322,27 +318,52 @@ evolve board =
     board |> Matrix.indexedMap (evolveCell board)
 
 
-getBoardRows : Board -> List (List Cell)
-getBoardRows board =
+type alias CellWithFutureAndPosition =
+    ( ( Int, Int ), Cell, Cell )
+
+
+getBoardRowsWithFuture : Bool -> Board -> List (List CellWithFutureAndPosition)
+getBoardRowsWithFuture showPredictions board =
     let
-        height =
-            Matrix.height board
+        currentList =
+            board |> Matrix.toArray |> Array.toList
 
-        rowsIndices =
-            List.range 0 (height - 1)
+        futureList =
+            if showPredictions then
+                evolve board |> Matrix.toArray |> Array.toList
 
-        mapRowResultToRow r =
-            case r of
-                -- should not ever happen, but if it does, fail gracefully by replacing with a row of dead cells
-                Err _ ->
-                    List.repeat (Matrix.width board) Dead
+            else
+                currentList
 
-                Ok cells ->
-                    Array.toList cells
+        currentAndFuture =
+            List.map2 Tuple.pair currentList futureList
+
+        rowLength =
+            Matrix.width board
+
+        rows =
+            splitInChunks rowLength currentAndFuture
     in
-    rowsIndices
-        |> List.map (\r -> Matrix.getRow r board)
-        |> List.map mapRowResultToRow
+    rows |> List.indexedMap mapRowWithPosition
+
+
+mapRowWithPosition : Int -> List ( Cell, Cell ) -> List CellWithFutureAndPosition
+mapRowWithPosition rowIndex list =
+    list |> List.indexedMap (\colIndex ( cur, fut ) -> ( ( rowIndex, colIndex ), cur, fut ))
+
+
+
+-- UTILS
+
+
+splitInChunks : Int -> List a -> List (List a)
+splitInChunks chunkSize list =
+    case List.take chunkSize list of
+        [] ->
+            []
+
+        head ->
+            head :: splitInChunks chunkSize (List.drop chunkSize list)
 
 
 
