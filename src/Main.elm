@@ -33,6 +33,7 @@ type Msg
     | Reset
     | SetSpeed Int
     | ShowPredictions Bool
+    | SetDrawMode Bool
     | SetGridSize ( Int, Int )
     | SetCursor ( Int, Int )
 
@@ -48,6 +49,7 @@ initialModel =
         params =
             { autorunSpeed = 0
             , showPredictions = False
+            , drawMode = False
             , gridSize = ( 10, 10 )
             }
     in
@@ -77,7 +79,7 @@ view { generation, params, board, cursor } =
 
 
 viewToolbar : Int -> Params -> Html Msg
-viewToolbar generation { autorunSpeed, showPredictions, gridSize } =
+viewToolbar generation { autorunSpeed, showPredictions, gridSize, drawMode } =
     header []
         [ span [] [ text ("Generation #" ++ String.fromInt generation) ]
         , button [ Events.onClick Evolve, Attr.disabled (autorunSpeed > 0) ]
@@ -86,6 +88,7 @@ viewToolbar generation { autorunSpeed, showPredictions, gridSize } =
             [ text "Reset" ]
         , viewSpeedSelector autorunSpeed
         , viewShowPredictionCheckbox showPredictions
+        , viewDrawModeCheckbox drawMode
         , viewGridSizeControls gridSize
         ]
 
@@ -108,6 +111,14 @@ viewSpeedRadioButton value isChecked =
         []
         [ input [ Attr.type_ "radio", Attr.name "autorunSpeed", Events.onInput (\_ -> SetSpeed value), Attr.checked isChecked ] []
         , text (String.fromInt value)
+        ]
+
+
+viewDrawModeCheckbox : Bool -> Html Msg
+viewDrawModeCheckbox enabled =
+    label []
+        [ input [ Attr.type_ "checkbox", Attr.checked enabled, Events.onCheck SetDrawMode ] []
+        , text "Draw mode"
         ]
 
 
@@ -207,6 +218,11 @@ update msg model =
             , Cmd.none
             )
 
+        SetDrawMode enabled ->
+            ( { model | params = model.params |> setDrawMode enabled }
+            , Cmd.none
+            )
+
         SetGridSize size ->
             let
                 newParams =
@@ -217,7 +233,15 @@ update msg model =
             )
 
         SetCursor cursorPos ->
-            ( { model | cursor = Just cursorPos }, Cmd.none )
+            let
+                board =
+                    if model.params.drawMode then
+                        toggleCell cursorPos model.board
+
+                    else
+                        model.board
+            in
+            ( { model | cursor = Just cursorPos, board = board }, Cmd.none )
 
 
 setAutorunSpeed : Int -> Params -> Params
@@ -228,6 +252,11 @@ setAutorunSpeed speed params =
 setShowPredictions : Bool -> Params -> Params
 setShowPredictions show params =
     { params | showPredictions = show }
+
+
+setDrawMode : Bool -> Params -> Params
+setDrawMode enabled params =
+    { params | drawMode = enabled }
 
 
 setGridSize : ( Int, Int ) -> Params -> Params
@@ -299,6 +328,7 @@ copyFrom origin x y =
 type alias Params =
     { autorunSpeed : Int
     , showPredictions : Bool
+    , drawMode : Bool
     , gridSize : ( Int, Int )
     }
 
@@ -334,6 +364,26 @@ evolve board =
     board |> Matrix.indexedMap (evolveCell board)
 
 
+toggleCell : ( Int, Int ) -> Board -> Board
+toggleCell ( x, y ) board =
+    case Matrix.get x y board of
+        Err _ ->
+            board
+
+        Ok cell ->
+            Matrix.set x y (toggle cell) board
+
+
+toggle : Cell -> Cell
+toggle cell =
+    case cell of
+        Alive ->
+            Dead
+
+        Dead ->
+            Alive
+
+
 type alias CellWithFutureAndPosition =
     ( ( Int, Int ), Cell, Cell )
 
@@ -365,7 +415,7 @@ getBoardRowsWithFuture showPredictions board =
 
 mapRowWithPosition : Int -> List ( Cell, Cell ) -> List CellWithFutureAndPosition
 mapRowWithPosition rowIndex list =
-    list |> List.indexedMap (\colIndex ( cur, fut ) -> ( ( rowIndex, colIndex ), cur, fut ))
+    list |> List.indexedMap (\colIndex ( cur, fut ) -> ( ( colIndex, rowIndex ), cur, fut ))
 
 
 
