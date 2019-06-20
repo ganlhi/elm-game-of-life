@@ -36,6 +36,7 @@ type Msg
     | SetDrawMode Bool
     | SetGridSize ( Int, Int )
     | SetCursor ( Int, Int )
+    | DrawPattern (List ( Int, Int ))
 
 
 init : () -> ( Model, Cmd Msg )
@@ -46,24 +47,24 @@ init _ =
 initialModel : Model
 initialModel =
     let
+        width =
+            10
+
+        height =
+            10
+
         params =
             { autorunSpeed = 0
             , showPredictions = False
             , drawMode = False
-            , gridSize = ( 10, 10 )
+            , gridSize = ( width, height )
             }
     in
     { generation = 0
-    , board = makeStartingBoard params.gridSize
+    , board = makeBoard width height
     , params = params
     , cursor = Nothing
     }
-
-
-makeStartingBoard : ( Int, Int ) -> Board
-makeStartingBoard ( width, height ) =
-    -- as an example, generate a 10x10 board with an Octagon2 pulser in the middle
-    makeBoard width height (positionModel ( 1, 1 ) octagon2)
 
 
 
@@ -74,6 +75,7 @@ view : Model -> Html Msg
 view { generation, params, board, cursor } =
     div []
         [ viewToolbar generation params
+        , viewPatternsButtons allPatterns
         , viewBoard board params.showPredictions cursor
         ]
 
@@ -144,6 +146,11 @@ viewGridSizeControls ( width, height ) =
             , button [ Events.onClick (SetGridSize ( width, height + 1 )) ] [ text "+" ]
             ]
         ]
+
+
+viewPatternsButtons : List Pattern -> Html Msg
+viewPatternsButtons patterns =
+    List.map (\{ name, cells } -> button [ Events.onClick (DrawPattern cells) ] [ text name ]) patterns |> div []
 
 
 viewBoard : Board -> Bool -> Maybe ( Int, Int ) -> Html Msg
@@ -243,6 +250,9 @@ update msg model =
             in
             ( { model | cursor = Just cursorPos, board = board }, Cmd.none )
 
+        DrawPattern positions ->
+            ( { model | board = drawCells model.board model.cursor positions }, Cmd.none )
+
 
 setAutorunSpeed : Int -> Params -> Params
 setAutorunSpeed speed params =
@@ -287,18 +297,9 @@ subscriptions { params } =
 -- BUILD BOARD
 
 
-makeBoard : Int -> Int -> List ( Int, Int ) -> Board
-makeBoard width height positionsOfAliveCells =
-    Matrix.generate width height (setCellType positionsOfAliveCells)
-
-
-setCellType : List ( Int, Int ) -> Int -> Int -> Cell
-setCellType alivePositions x y =
-    if List.member ( x, y ) alivePositions then
-        Alive
-
-    else
-        Dead
+makeBoard : Int -> Int -> Board
+makeBoard width height =
+    Matrix.repeat width height Dead
 
 
 positionModel : ( Int, Int ) -> List ( Int, Int ) -> List ( Int, Int )
@@ -319,6 +320,32 @@ copyFrom origin x y =
 
         Ok cell ->
             cell
+
+
+drawCells : Board -> Maybe ( Int, Int ) -> List ( Int, Int ) -> Board
+drawCells board cursor positions =
+    let
+        topLeft =
+            case cursor of
+                Nothing ->
+                    ( 0, 0 )
+
+                Just xy ->
+                    xy
+
+        positionedCells =
+            positionModel topLeft positions
+    in
+    board |> Matrix.indexedMap (mapToAliveCells positionedCells)
+
+
+mapToAliveCells : List ( Int, Int ) -> Int -> Int -> Cell -> Cell
+mapToAliveCells newAliveCells x y cell =
+    if List.member ( x, y ) newAliveCells then
+        Alive
+
+    else
+        cell
 
 
 
@@ -436,5 +463,19 @@ splitInChunks chunkSize list =
 -- MODELS
 
 
+type alias Pattern =
+    { name : String
+    , cells : List ( Int, Int )
+    }
+
+
+allPatterns : List Pattern
+allPatterns =
+    [ octagon2 ]
+
+
+octagon2 : Pattern
 octagon2 =
-    [ ( 3, 0 ), ( 4, 0 ), ( 2, 1 ), ( 5, 1 ), ( 1, 2 ), ( 6, 2 ), ( 0, 3 ), ( 7, 3 ), ( 0, 4 ), ( 7, 4 ), ( 1, 5 ), ( 6, 5 ), ( 2, 6 ), ( 5, 6 ), ( 3, 7 ), ( 4, 7 ) ]
+    { name = "Octagon2"
+    , cells = [ ( 3, 0 ), ( 4, 0 ), ( 2, 1 ), ( 5, 1 ), ( 1, 2 ), ( 6, 2 ), ( 0, 3 ), ( 7, 3 ), ( 0, 4 ), ( 7, 4 ), ( 1, 5 ), ( 6, 5 ), ( 2, 6 ), ( 5, 6 ), ( 3, 7 ), ( 4, 7 ) ]
+    }
