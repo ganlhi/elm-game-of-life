@@ -7,6 +7,7 @@ import Html.Attributes as Attr
 import Html.Events as Events
 import Matrix exposing (Matrix)
 import Neighbours exposing (MatrixTopology(..), neighbours)
+import RLE
 import Task
 import Time
 
@@ -36,7 +37,7 @@ type Msg
     | SetDrawMode Bool
     | SetGridSize ( Int, Int )
     | SetCursor ( Int, Int )
-    | DrawPattern (List ( Int, Int ))
+    | DrawPattern String
 
 
 init : () -> ( Model, Cmd Msg )
@@ -48,10 +49,10 @@ initialModel : Model
 initialModel =
     let
         width =
-            10
+            50
 
         height =
-            10
+            30
 
         params =
             { autorunSpeed = 0
@@ -150,7 +151,7 @@ viewGridSizeControls ( width, height ) =
 
 viewPatternsButtons : List Pattern -> Html Msg
 viewPatternsButtons patterns =
-    List.map (\{ name, cells } -> button [ Events.onClick (DrawPattern cells) ] [ text name ]) patterns |> div []
+    List.map (\{ name, rle } -> button [ Events.onClick (DrawPattern rle) ] [ text name ]) patterns |> div []
 
 
 viewBoard : Board -> Bool -> Maybe ( Int, Int ) -> Html Msg
@@ -250,7 +251,11 @@ update msg model =
             in
             ( { model | cursor = Just cursorPos, board = board }, Cmd.none )
 
-        DrawPattern positions ->
+        DrawPattern rle ->
+            let
+                positions =
+                    RLE.decode rle
+            in
             ( { model | board = drawCells model.board model.cursor positions }, Cmd.none )
 
 
@@ -464,18 +469,19 @@ splitInChunks chunkSize list =
 
 
 type alias Pattern =
-    { name : String
-    , cells : List ( Int, Int )
-    }
+    { name : String, rle : String }
 
 
 allPatterns : List Pattern
 allPatterns =
-    [ octagon2 ]
+    [ octagon2, glider ]
 
 
 octagon2 : Pattern
 octagon2 =
-    { name = "Octagon2"
-    , cells = [ ( 3, 0 ), ( 4, 0 ), ( 2, 1 ), ( 5, 1 ), ( 1, 2 ), ( 6, 2 ), ( 0, 3 ), ( 7, 3 ), ( 0, 4 ), ( 7, 4 ), ( 1, 5 ), ( 6, 5 ), ( 2, 6 ), ( 5, 6 ), ( 3, 7 ), ( 4, 7 ) ]
-    }
+    { name = "Octagon2", rle = "3b2o3b$2bo2bo2b$bo4bob$o6bo$o6bo$bo4bob$2bo2bo2b$3b2o!" }
+
+
+glider : Pattern
+glider =
+    { name = "Glider", rle = "bob$2bo$3o!" }
