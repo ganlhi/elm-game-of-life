@@ -53,10 +53,6 @@ update msg model =
             ( { model | simSpeed = speed }, Cmd.none )
 
         CanvasClick pos ->
-            let
-                _ =
-                    Debug.log "CanvasClick" pos
-            in
             ( { model | board = Board.toggleCell pos model.board }, Cmd.none )
 
 
