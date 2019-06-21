@@ -3,4 +3,4 @@ parcelRequire=function(e,r,t,n){var i,o="function"==typeof parcelRequire&&parcel
 },{}],"Focm":[function(require,module,exports) {
 "use strict";var e=require("../src/Main.elm");e.Elm.Main.init({node:document.querySelector("main")});
 },{"../src/Main.elm":"zQ7y"}]},{},["Focm"], null)
-//# sourceMappingURL=/public.c8dfdb7d.js.map
+//# sourceMappingURL=/elm-game-of-life/public.c8dfdb7d.js.map
