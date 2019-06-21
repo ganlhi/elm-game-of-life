@@ -1,4 +1,4 @@
-module Board exposing (Board, evolve, generateFromPattern, getPopulation)
+module Board exposing (Board, evolve, generateFromPattern, getPopulation, toggleCell)
 
 import Cell exposing (Cell(..))
 import Patterns exposing (..)
@@ -98,6 +98,19 @@ evolve board =
     newBoard
         |> List.map (evolveCell newBoard)
         |> List.filter Cell.isAlive
+
+
+toggleCell : ( Int, Int ) -> Board -> Board
+toggleCell pos board =
+    let
+        aliveCells =
+            getAliveCells board
+    in
+    if hasCellAtPos aliveCells pos then
+        List.filter (\c -> Cell.getPos c /= pos) aliveCells
+
+    else
+        Alive pos :: aliveCells
 
 
 generateFromPattern : ( Int, Int ) -> String -> Board

@@ -28,6 +28,10 @@ header button {
   margin-left: 10px;
 } */
 
+body {
+  font-family: Helvetica, sans-serif;
+}
+
 elm-canvas {
   display: block;
 }
@@ -38,9 +42,20 @@ elm-canvas {
 }
 
 footer {
+  width: max-content;
   display: grid;
-  grid-template-columns: max-content;
+  grid-template-columns: auto;
   grid-template-rows: 1fr;
   grid-auto-flow: column;
   grid-column-gap: 10px;
+}
+
+footer > *:not(:first-child)::before {
+  content: "|";
+  margin-right: 10px;
+}
+
+.speed-btn.active {
+  font-weight: bold;
+  color: cornflowerblue;
 }

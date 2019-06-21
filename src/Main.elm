@@ -49,6 +49,16 @@ update msg model =
             in
             ( { model | generation = model.generation + 1, board = newBoard }, Cmd.none )
 
+        SetSpeed speed ->
+            ( { model | simSpeed = speed }, Cmd.none )
+
+        CanvasClick pos ->
+            let
+                _ =
+                    Debug.log "CanvasClick" pos
+            in
+            ( { model | board = Board.toggleCell pos model.board }, Cmd.none )
+
 
 
 -- COMMANDS & TASKS

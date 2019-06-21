@@ -10,3 +10,5 @@ type alias Model =
 type Msg
     = Evolve
     | Reset
+    | SetSpeed Int
+    | CanvasClick ( Int, Int )
