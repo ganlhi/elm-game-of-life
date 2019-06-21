@@ -1,0 +1,2 @@
+body{font-family:Helvetica,sans-serif}elm-canvas{display:block}.toolbar{display:flex;margin-bottom:10px}footer{width:max-content;display:grid;grid-template-columns:auto;grid-template-rows:1fr;grid-auto-flow:column;grid-column-gap:10px}footer>:not(:first-child):before{content:"|";margin-right:10px}.speed-btn.active{font-weight:700;color:#6495ed}
+/*# sourceMappingURL=/style.59a16719.css.map */
