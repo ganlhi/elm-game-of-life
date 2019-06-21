@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Board exposing (..)
 import Browser
+import Browser.Events exposing (onAnimationFrameDelta)
 import Cell exposing (..)
 import Core exposing (..)
 import Render
@@ -29,8 +30,9 @@ init _ =
 initialModel : Model
 initialModel =
     { generation = 0
-    , board = Board.generateFromPattern "Octagon2"
+    , board = Board.generateFromPattern ( 10, 10 ) "Octagon2"
     , simSpeed = 0
+    , viewSize = ( 800, 600 )
     }
 
 
@@ -41,7 +43,11 @@ update msg model =
             ( initialModel, Cmd.none )
 
         Evolve ->
-            ( { model | generation = model.generation + 1, board = Board.evolve model.board }, Cmd.none )
+            let
+                newBoard =
+                    Board.evolve model.board
+            in
+            ( { model | generation = model.generation + 1, board = newBoard }, Cmd.none )
 
 
 

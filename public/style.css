@@ -1,4 +1,4 @@
-table {
+/* table {
   font-family: monospace;
 
   border-collapse: collapse;
@@ -26,4 +26,21 @@ header {
 
 header button {
   margin-left: 10px;
+} */
+
+elm-canvas {
+  display: block;
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+footer {
+  display: grid;
+  grid-template-columns: max-content;
+  grid-template-rows: 1fr;
+  grid-auto-flow: column;
+  grid-column-gap: 10px;
 }

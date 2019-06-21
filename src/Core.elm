@@ -4,7 +4,7 @@ import Board exposing (Board)
 
 
 type alias Model =
-    { generation : Int, board : Board, simSpeed : Int }
+    { generation : Int, board : Board, simSpeed : Int, viewSize : ( Int, Int ) }
 
 
 type Msg

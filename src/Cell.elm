@@ -1,4 +1,4 @@
-module Cell exposing (Cell(..), Position, distanceTo, generateDeadNeighbours, getPos, isAlive, isDead, neighbours, toggle)
+module Cell exposing (Cell(..), Position, generateDeadNeighbours, getPos, isAlive, isDead, neighbours, toggle)
 
 
 type alias Position =
@@ -68,18 +68,20 @@ neighbours a b =
 generateDeadNeighbours : Cell -> List Cell
 generateDeadNeighbours cell =
     let
-        offsets =
-            [ ( -1, -1 )
-            , ( 0, -1 )
-            , ( 0, 1 )
-            , ( -1, 0 )
-            , ( 1, 0 )
-            , ( -1, 1 )
-            , ( 0, 1 )
-            , ( 1, 1 )
-            ]
-
         ( x, y ) =
             getPos cell
     in
-    offsets |> List.map (\( dx, dy ) -> Dead ( dx + x, dy + y ))
+    neighboursOffsets |> List.map (\( dx, dy ) -> Dead ( dx + x, dy + y ))
+
+
+neighboursOffsets : List Position
+neighboursOffsets =
+    [ ( -1, -1 )
+    , ( -1, 0 )
+    , ( -1, 1 )
+    , ( 0, -1 )
+    , ( 0, 1 )
+    , ( 1, -1 )
+    , ( 1, 0 )
+    , ( 1, 1 )
+    ]
