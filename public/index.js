@@ -1,3 +1,4 @@
+import "elm-canvas/elm-canvas";
 import { Elm } from "../src/Main.elm";
 
 Elm.Main.init({
