@@ -8,41 +8,27 @@ import Core exposing (..)
 import Html exposing (..)
 import Html.Attributes as Attr
 import Html.Events as Events
+import Html.Events.Extra.Mouse as Mouse
+import Html.Events.Extra.Wheel as Wheel
 import Json.Decode as Decode
 
 
 view : Model -> Html Msg
 view model =
-    let
-        factor =
-            10
-    in
     div
         []
         [ viewToolbar model
-        , viewBoard model factor
+        , viewBoard model model.zoomFactor
         , viewStatusBar model
         ]
 
 
-viewBoard : Model -> Int -> Html Msg
-viewBoard model factor =
-    let
-        clickHandler : ( Int, Int ) -> Msg
-        clickHandler ( x, y ) =
-            let
-                posX =
-                    floor (toFloat x / toFloat factor)
-
-                posY =
-                    floor (toFloat y / toFloat factor)
-            in
-            CanvasClick ( posX, posY )
-    in
+viewBoard : Model -> Float -> Html Msg
+viewBoard model zoomFactor =
     Canvas.toHtml model.viewSize
-        [ onCanvasClick clickHandler ]
+        [ Mouse.onClick (clickHandler model.zoomFactor), Wheel.onWheel handleZoom ]
         [ clearScreen model.viewSize
-        , renderBoard factor model.board
+        , renderBoard zoomFactor model.board
         ]
 
 
@@ -51,26 +37,26 @@ clearScreen ( width, height ) =
     Canvas.shapes [ Canvas.fill Color.white ] [ Canvas.rect ( 0, 0 ) (toFloat width) (toFloat height) ]
 
 
-renderBoard : Int -> List Cell -> Canvas.Renderable
-renderBoard factor =
-    Canvas.shapes [ Canvas.fill Color.black ] << renderCells factor 0.8
+renderBoard : Float -> List Cell -> Canvas.Renderable
+renderBoard zoomFactor =
+    Canvas.shapes [ Canvas.fill Color.black ] << renderCells zoomFactor 0.8
 
 
-renderCells : Int -> Float -> List Cell -> List Shape
-renderCells factor coverage cells =
-    List.filterMap (renderCell factor coverage) cells
+renderCells : Float -> Float -> List Cell -> List Shape
+renderCells zoomFactor coverage cells =
+    List.filterMap (renderCell zoomFactor coverage) cells
 
 
-renderCell : Int -> Float -> Cell -> Maybe Shape
-renderCell factor coverage cell =
+renderCell : Float -> Float -> Cell -> Maybe Shape
+renderCell zoomFactor coverage cell =
     case cell of
         Alive pos ->
             let
                 point =
-                    mapPositionToPoint factor pos
+                    mapPositionToPoint zoomFactor pos
 
                 size =
-                    toFloat factor * coverage
+                    zoomFactor * coverage
             in
             Just (Canvas.rect point size size)
 
@@ -78,9 +64,9 @@ renderCell factor coverage cell =
             Nothing
 
 
-mapPositionToPoint : Int -> Cell.Position -> Canvas.Point
-mapPositionToPoint factor ( x, y ) =
-    ( toFloat (x * factor), toFloat (y * factor) )
+mapPositionToPoint : Float -> Cell.Position -> Canvas.Point
+mapPositionToPoint zoomFactor ( x, y ) =
+    ( toFloat x * zoomFactor, toFloat y * zoomFactor )
 
 
 viewToolbar : Model -> Html Msg
@@ -133,16 +119,28 @@ viewStatusBar model =
 
 
 
--- Custom event
+-- Events
 
 
-onCanvasClick : (( Int, Int ) -> msg) -> Attribute msg
-onCanvasClick tagger =
-    Events.on "click" (Decode.map tagger mousePos)
+handleZoom : Wheel.Event -> Msg
+handleZoom wheelEvent =
+    if wheelEvent.deltaY > 0 then
+        ZoomOut
+
+    else
+        ZoomIn
 
 
-mousePos : Decode.Decoder ( Int, Int )
-mousePos =
-    Decode.map2 (\x y -> ( x, y ))
-        (Decode.at [ "offsetX" ] Decode.int)
-        (Decode.at [ "offsetY" ] Decode.int)
+clickHandler : Float -> Mouse.Event -> Msg
+clickHandler zoomFactor mouseEvent =
+    let
+        ( x, y ) =
+            mouseEvent.offsetPos
+
+        posX =
+            floor (x / zoomFactor)
+
+        posY =
+            floor (y / zoomFactor)
+    in
+    CanvasClick ( posX, posY )

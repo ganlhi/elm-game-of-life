@@ -33,6 +33,7 @@ initialModel =
     , board = Board.generateFromPattern ( 10, 10 ) "Octagon2"
     , simSpeed = 0
     , viewSize = ( 800, 600 )
+    , zoomFactor = 10
     }
 
 
@@ -51,6 +52,12 @@ update msg model =
 
         SetSpeed speed ->
             ( { model | simSpeed = speed }, Cmd.none )
+
+        ZoomIn ->
+            ( { model | zoomFactor = model.zoomFactor * 1.1 }, Cmd.none )
+
+        ZoomOut ->
+            ( { model | zoomFactor = model.zoomFactor * 0.9 }, Cmd.none )
 
         CanvasClick pos ->
             ( { model | board = Board.toggleCell pos model.board }, Cmd.none )
