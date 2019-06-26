@@ -18,17 +18,23 @@ view model =
     div
         []
         [ viewToolbar model
-        , viewBoard model model.zoomFactor
+        , viewBoard model
         , viewStatusBar model
         ]
 
 
-viewBoard : Model -> Float -> Html Msg
-viewBoard model zoomFactor =
+viewBoard : Model -> Html Msg
+viewBoard model =
     Canvas.toHtml model.viewSize
-        [ Mouse.onClick (clickHandler model.zoomFactor), Wheel.onWheel handleZoom ]
+        [ Mouse.onClick (clickHandler model.viewTopLeft model.zoomFactor)
+        , Mouse.onDown (mouseUpDownHandler True)
+        , Mouse.onUp (mouseUpDownHandler False)
+        , Mouse.onLeave (\_ -> Panning Nothing)
+        , Mouse.onMove (mouseMoveHandler model.panning)
+        , Wheel.onWheel handleZoom
+        ]
         [ clearScreen model.viewSize
-        , renderBoard zoomFactor model.board
+        , renderBoard model.viewTopLeft model.zoomFactor model.board
         ]
 
 
@@ -37,23 +43,23 @@ clearScreen ( width, height ) =
     Canvas.shapes [ Canvas.fill Color.white ] [ Canvas.rect ( 0, 0 ) (toFloat width) (toFloat height) ]
 
 
-renderBoard : Float -> List Cell -> Canvas.Renderable
-renderBoard zoomFactor =
-    Canvas.shapes [ Canvas.fill Color.black ] << renderCells zoomFactor 0.8
+renderBoard : ( Float, Float ) -> Float -> List Cell -> Canvas.Renderable
+renderBoard topLeft zoomFactor =
+    Canvas.shapes [ Canvas.fill Color.black ] << renderCells topLeft zoomFactor 0.8
 
 
-renderCells : Float -> Float -> List Cell -> List Shape
-renderCells zoomFactor coverage cells =
-    List.filterMap (renderCell zoomFactor coverage) cells
+renderCells : ( Float, Float ) -> Float -> Float -> List Cell -> List Shape
+renderCells topLeft zoomFactor coverage cells =
+    List.filterMap (renderCell topLeft zoomFactor coverage) cells
 
 
-renderCell : Float -> Float -> Cell -> Maybe Shape
-renderCell zoomFactor coverage cell =
+renderCell : ( Float, Float ) -> Float -> Float -> Cell -> Maybe Shape
+renderCell topLeft zoomFactor coverage cell =
     case cell of
         Alive pos ->
             let
                 point =
-                    mapPositionToPoint zoomFactor pos
+                    mapPositionToPoint topLeft zoomFactor pos
 
                 size =
                     zoomFactor * coverage
@@ -64,9 +70,9 @@ renderCell zoomFactor coverage cell =
             Nothing
 
 
-mapPositionToPoint : Float -> Cell.Position -> Canvas.Point
-mapPositionToPoint zoomFactor ( x, y ) =
-    ( toFloat x * zoomFactor, toFloat y * zoomFactor )
+mapPositionToPoint : ( Float, Float ) -> Float -> Cell.Position -> Canvas.Point
+mapPositionToPoint ( left, top ) zoomFactor ( x, y ) =
+    ( toFloat x * zoomFactor - left, toFloat y * zoomFactor - top )
 
 
 viewToolbar : Model -> Html Msg
@@ -131,16 +137,40 @@ handleZoom wheelEvent =
         ZoomIn
 
 
-clickHandler : Float -> Mouse.Event -> Msg
-clickHandler zoomFactor mouseEvent =
+clickHandler : ( Float, Float ) -> Float -> Mouse.Event -> Msg
+clickHandler ( left, top ) zoomFactor mouseEvent =
     let
         ( x, y ) =
             mouseEvent.offsetPos
 
         posX =
-            floor (x / zoomFactor)
+            floor ((x + left) / zoomFactor)
 
         posY =
-            floor (y / zoomFactor)
+            floor ((y + top) / zoomFactor)
     in
     CanvasClick ( posX, posY )
+
+
+mouseUpDownHandler : Bool -> Mouse.Event -> Msg
+mouseUpDownHandler panMode mouseEvent =
+    case mouseEvent.button of
+        Mouse.MiddleButton ->
+            if panMode then
+                Panning (Just mouseEvent.clientPos)
+
+            else
+                Panning Nothing
+
+        _ ->
+            Noop
+
+
+mouseMoveHandler : Maybe ( Float, Float ) -> Mouse.Event -> Msg
+mouseMoveHandler panning mouseEvent =
+    case panning of
+        Nothing ->
+            Noop
+
+        Just _ ->
+            Panning (Just mouseEvent.clientPos)

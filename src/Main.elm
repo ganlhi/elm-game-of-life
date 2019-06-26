@@ -33,13 +33,18 @@ initialModel =
     , board = Board.generateFromPattern ( 10, 10 ) "Octagon2"
     , simSpeed = 0
     , viewSize = ( 800, 600 )
+    , viewTopLeft = ( 0, 0 )
     , zoomFactor = 10
+    , panning = Nothing
     }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Noop ->
+            ( model, Cmd.none )
+
         Reset ->
             ( initialModel, Cmd.none )
 
@@ -61,6 +66,36 @@ update msg model =
 
         CanvasClick pos ->
             ( { model | board = Board.toggleCell pos model.board }, Cmd.none )
+
+        Panning fromPos ->
+            case ( model.panning, fromPos ) of
+                ( Nothing, Nothing ) ->
+                    ( model, Cmd.none )
+
+                ( Nothing, Just _ ) ->
+                    ( { model | panning = fromPos }, Cmd.none )
+
+                ( Just _, Nothing ) ->
+                    ( { model | panning = fromPos }, Cmd.none )
+
+                ( Just oldPos, Just newPos ) ->
+                    ( { model | viewTopLeft = panView model oldPos newPos, panning = Just newPos }, Cmd.none )
+
+
+panView : Model -> ( Float, Float ) -> ( Float, Float ) -> ( Float, Float )
+panView model ( oldX, oldY ) ( newX, newY ) =
+    let
+        computeDiff : Float -> Float -> Float
+        computeDiff prev cur =
+            cur - prev
+
+        ( dx, dy ) =
+            ( computeDiff oldX newX, computeDiff oldY newY )
+
+        topLeft =
+            ( Tuple.first model.viewTopLeft - dx, Tuple.second model.viewTopLeft - dy )
+    in
+    topLeft
 
 
 
