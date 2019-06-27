@@ -10,6 +10,8 @@ import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Events.Extra.Mouse as Mouse
 import Html.Events.Extra.Wheel as Wheel
+import Json.Decode as Decode
+import MouseMovement exposing (onMove)
 
 
 view : Model -> Html Msg
@@ -25,15 +27,15 @@ view model =
 viewBoard : Model -> Html Msg
 viewBoard model =
     Canvas.toHtml model.viewSize
-        [ Mouse.onClick (clickHandler model.viewTopLeft model.zoomFactor)
+        [ Mouse.onClick (clickHandler model.viewport.topLeft model.viewport.zoom)
         , Mouse.onDown (mouseUpDownHandler True)
         , Mouse.onUp (mouseUpDownHandler False)
-        , Mouse.onLeave (\_ -> Panning Nothing)
-        , Mouse.onMove (mouseMoveHandler model.panning)
+        , Mouse.onLeave (\_ -> Panning False)
+        , panHandler model.panning
         , Wheel.onWheel handleZoom
         ]
         [ clearScreen model.viewSize
-        , renderBoard model.viewTopLeft model.zoomFactor model.board
+        , renderBoard model.viewport.topLeft model.viewport.zoom model.board
         ]
 
 
@@ -148,28 +150,23 @@ clickHandler ( left, top ) zoomFactor mouseEvent =
         posY =
             floor ((y + top) / zoomFactor)
     in
-    CanvasClick ( posX, posY )
+    ToggleCell ( posX, posY )
 
 
 mouseUpDownHandler : Bool -> Mouse.Event -> Msg
 mouseUpDownHandler panMode mouseEvent =
     case mouseEvent.button of
         Mouse.MiddleButton ->
-            if panMode then
-                Panning (Just mouseEvent.clientPos)
-
-            else
-                Panning Nothing
+            Panning panMode
 
         _ ->
             Noop
 
 
-mouseMoveHandler : Maybe ( Float, Float ) -> Mouse.Event -> Msg
-mouseMoveHandler panning mouseEvent =
-    case panning of
-        Nothing ->
-            Noop
+panHandler : Bool -> Html.Attribute Msg
+panHandler panning =
+    if not panning then
+        Events.custom "mousemove" <| Decode.fail "not panning"
 
-        Just _ ->
-            Panning (Just mouseEvent.clientPos)
+    else
+        onMove (.movement >> Movement)

@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Board
 import Browser
-import Core exposing (Model, Msg(..))
+import Core exposing (Model, Msg(..), Viewport)
 import Render
 import Time
 
@@ -31,9 +31,8 @@ initialModel =
     , board = Board.generateFromPattern ( 10, 10 ) "Octagon2"
     , simSpeed = 0
     , viewSize = ( 800, 600 )
-    , viewTopLeft = ( 0, 0 )
-    , zoomFactor = 10
-    , panning = Nothing
+    , viewport = { zoom = 10, topLeft = ( 0, 0 ) }
+    , panning = False
     }
 
 
@@ -57,43 +56,29 @@ update msg model =
             ( { model | simSpeed = speed }, Cmd.none )
 
         ZoomIn ->
-            ( { model | zoomFactor = model.zoomFactor * 1.1 }, Cmd.none )
+            ( { model | viewport = model.viewport |> zoom 1.1 }, Cmd.none )
 
         ZoomOut ->
-            ( { model | zoomFactor = model.zoomFactor * 0.9 }, Cmd.none )
+            ( { model | viewport = model.viewport |> zoom 0.9 }, Cmd.none )
 
-        CanvasClick pos ->
+        ToggleCell pos ->
             ( { model | board = Board.toggleCell pos model.board }, Cmd.none )
 
-        Panning fromPos ->
-            case ( model.panning, fromPos ) of
-                ( Nothing, Nothing ) ->
-                    ( model, Cmd.none )
+        Movement mv ->
+            ( { model | viewport = model.viewport |> pan mv }, Cmd.none )
 
-                ( Nothing, Just _ ) ->
-                    ( { model | panning = fromPos }, Cmd.none )
-
-                ( Just _, Nothing ) ->
-                    ( { model | panning = fromPos }, Cmd.none )
-
-                ( Just oldPos, Just newPos ) ->
-                    ( { model | viewTopLeft = panView model oldPos newPos, panning = Just newPos }, Cmd.none )
+        Panning panning ->
+            ( { model | panning = panning }, Cmd.none )
 
 
-panView : Model -> ( Float, Float ) -> ( Float, Float ) -> ( Float, Float )
-panView model ( oldX, oldY ) ( newX, newY ) =
-    let
-        computeDiff : Float -> Float -> Float
-        computeDiff prev cur =
-            cur - prev
+zoom : Float -> Viewport -> Viewport
+zoom coeff vp =
+    { vp | zoom = vp.zoom * coeff }
 
-        ( dx, dy ) =
-            ( computeDiff oldX newX, computeDiff oldY newY )
 
-        topLeft =
-            ( Tuple.first model.viewTopLeft - dx, Tuple.second model.viewTopLeft - dy )
-    in
-    topLeft
+pan : ( Float, Float ) -> Viewport -> Viewport
+pan ( dx, dy ) vp =
+    { vp | topLeft = ( Tuple.first vp.topLeft - dx, Tuple.second vp.topLeft - dy ) }
 
 
 

@@ -1,6 +1,12 @@
-module Core exposing (Model, Msg(..))
+module Core exposing (Model, Msg(..), Viewport)
 
 import Board exposing (Board)
+
+
+type alias Viewport =
+    { zoom : Float
+    , topLeft : ( Float, Float )
+    }
 
 
 type alias Model =
@@ -8,9 +14,8 @@ type alias Model =
     , board : Board
     , simSpeed : Int
     , viewSize : ( Int, Int )
-    , viewTopLeft : ( Float, Float )
-    , zoomFactor : Float
-    , panning : Maybe ( Float, Float )
+    , viewport : Viewport
+    , panning : Bool
     }
 
 
@@ -21,5 +26,6 @@ type Msg
     | SetSpeed Int
     | ZoomIn
     | ZoomOut
-    | CanvasClick ( Int, Int )
-    | Panning (Maybe ( Float, Float ))
+    | ToggleCell ( Int, Int )
+    | Panning Bool
+    | Movement ( Float, Float )
