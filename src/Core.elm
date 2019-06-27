@@ -1,6 +1,7 @@
 module Core exposing (Model, Msg(..), Viewport)
 
 import Board exposing (Board)
+import Browser.Dom
 
 
 type alias Viewport =
@@ -24,6 +25,8 @@ type Msg
     | Evolve
     | Reset
     | SetSpeed Int
+    | ResizeView
+    | GotDomViewport Browser.Dom.Viewport
     | ZoomIn
     | ZoomOut
     | ToggleCell ( Int, Int )

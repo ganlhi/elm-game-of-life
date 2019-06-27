@@ -1,9 +1,12 @@
 module Main exposing (main)
 
-import Board
+import Board exposing (Board)
 import Browser
+import Browser.Dom
+import Browser.Events
 import Core exposing (Model, Msg(..), Viewport)
 import Render
+import Task
 import Time
 
 
@@ -22,18 +25,28 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initialModel, Cmd.none )
+    ( initialModel, getViewportTask )
+
+
+getViewportTask : Cmd Msg
+getViewportTask =
+    Task.perform GotDomViewport Browser.Dom.getViewport
 
 
 initialModel : Model
 initialModel =
     { generation = 0
-    , board = Board.generateFromPattern ( 10, 10 ) "Octagon2"
+    , board = initialBoard
     , simSpeed = 0
     , viewSize = ( 800, 600 )
     , viewport = { zoom = 10, topLeft = ( 0, 0 ) }
     , panning = False
     }
+
+
+initialBoard : Board
+initialBoard =
+    Board.generateFromPattern ( 10, 10 ) "Octagon2"
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -43,17 +56,34 @@ update msg model =
             ( model, Cmd.none )
 
         Reset ->
-            ( initialModel, Cmd.none )
+            ( { model
+                | generation = 0
+                , board = initialBoard
+                , simSpeed = 0
+              }
+            , Cmd.none
+            )
 
         Evolve ->
             let
                 newBoard =
                     Board.evolve model.board
             in
-            ( { model | generation = model.generation + 1, board = newBoard }, Cmd.none )
+            ( { model
+                | generation = model.generation + 1
+                , board = newBoard
+              }
+            , Cmd.none
+            )
 
         SetSpeed speed ->
             ( { model | simSpeed = speed }, Cmd.none )
+
+        ResizeView ->
+            ( model, getViewportTask )
+
+        GotDomViewport { viewport } ->
+            ( { model | viewSize = ( floor viewport.width - 20, floor viewport.height - 20 ) }, Cmd.none )
 
         ZoomIn ->
             ( { model | viewport = model.viewport |> zoom 1.1 }, Cmd.none )
@@ -87,9 +117,20 @@ pan ( dx, dy ) vp =
 
 subscriptions : Model -> Sub Msg
 subscriptions { simSpeed } =
-    case simSpeed of
-        0 ->
-            Sub.none
+    let
+        autorunSub =
+            case simSpeed of
+                0 ->
+                    Sub.none
 
-        speed ->
-            Time.every (1000 / toFloat speed) (\_ -> Evolve)
+                speed ->
+                    Time.every (1000 / toFloat speed) (\_ -> Evolve)
+
+        windowResizeSub : Sub Msg
+        windowResizeSub =
+            Browser.Events.onResize (\_ _ -> ResizeView)
+    in
+    Sub.batch
+        [ autorunSub
+        , windowResizeSub
+        ]
