@@ -2,15 +2,14 @@ module Render exposing (view)
 
 import Board exposing (getPopulation)
 import Canvas exposing (Shape)
-import Cell exposing (..)
+import Cell exposing (Cell(..))
 import Color
-import Core exposing (..)
-import Html exposing (..)
+import Core exposing (Model, Msg(..))
+import Html exposing (Html, button, div, fieldset, footer, legend, span, text)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Events.Extra.Mouse as Mouse
 import Html.Events.Extra.Wheel as Wheel
-import Json.Decode as Decode
 
 
 view : Model -> Html Msg

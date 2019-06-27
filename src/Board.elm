@@ -1,7 +1,7 @@
 module Board exposing (Board, evolve, generateFromPattern, getPopulation, toggleCell)
 
 import Cell exposing (Cell(..))
-import Patterns exposing (..)
+import Patterns
 import RLE
 import Utils
 
@@ -18,11 +18,6 @@ getPopulation =
 getAliveCells : Board -> List Cell
 getAliveCells =
     List.filter Cell.isAlive
-
-
-getDeadCells : Board -> List Cell
-getDeadCells =
-    List.filter Cell.isDead
 
 
 getNeighbours : Board -> Cell -> List Cell

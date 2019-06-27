@@ -1,10 +1,8 @@
 module Main exposing (main)
 
-import Board exposing (..)
+import Board
 import Browser
-import Browser.Events exposing (onAnimationFrameDelta)
-import Cell exposing (..)
-import Core exposing (..)
+import Core exposing (Model, Msg(..))
 import Render
 import Time
 
@@ -109,4 +107,4 @@ subscriptions { simSpeed } =
             Sub.none
 
         speed ->
-            Time.every (1000 / toFloat simSpeed) (\_ -> Evolve)
+            Time.every (1000 / toFloat speed) (\_ -> Evolve)

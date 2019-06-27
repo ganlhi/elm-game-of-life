@@ -2,7 +2,9 @@ module Patterns exposing (Pattern, all, get)
 
 
 type alias Pattern =
-    { name : String, rle : String }
+    { name : String
+    , rle : String
+    }
 
 
 all : List Pattern

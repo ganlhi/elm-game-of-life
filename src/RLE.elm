@@ -27,7 +27,7 @@ splitRow rowIndex row =
     rowCells
         |> List.indexedMap
             (\colIndex alive -> ( colIndex, rowIndex, alive ))
-        |> List.filter (\( x, y, alive ) -> alive)
+        |> List.filter (\( _, _, alive ) -> alive)
         |> List.map (\( x, y, _ ) -> ( x, y ))
 
 
@@ -44,5 +44,6 @@ mapMatchToGroup { submatches } =
             ( 1, False )
 
 
+splitGroups : Regex.Regex
 splitGroups =
     Maybe.withDefault Regex.never <| Regex.fromString "((\\d*)([ob]))"

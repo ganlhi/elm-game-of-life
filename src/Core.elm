@@ -4,7 +4,14 @@ import Board exposing (Board)
 
 
 type alias Model =
-    { generation : Int, board : Board, simSpeed : Int, viewSize : ( Int, Int ), viewTopLeft : ( Float, Float ), zoomFactor : Float, panning : Maybe ( Float, Float ) }
+    { generation : Int
+    , board : Board
+    , simSpeed : Int
+    , viewSize : ( Int, Int )
+    , viewTopLeft : ( Float, Float )
+    , zoomFactor : Float
+    , panning : Maybe ( Float, Float )
+    }
 
 
 type Msg
