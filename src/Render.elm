@@ -4,7 +4,7 @@ import Board exposing (getPopulation)
 import Canvas exposing (Shape)
 import Cell exposing (Cell(..))
 import Color
-import Core exposing (Model, Msg(..))
+import Core exposing (Model, Msg(..), Viewport)
 import Html exposing (Html, button, div, fieldset, footer, legend, span, text)
 import Html.Attributes as Attr
 import Html.Events as Events
@@ -26,6 +26,10 @@ view model =
 
 viewBoard : Model -> Html Msg
 viewBoard model =
+    let
+        cellviews =
+            extractCellViews model.viewport model.board
+    in
     Canvas.toHtml model.viewSize
         [ Mouse.onClick (clickHandler model.viewport.topLeft model.viewport.zoom)
         , Mouse.onDown (mouseUpDownHandler True)
@@ -35,7 +39,7 @@ viewBoard model =
         , Wheel.onWheel handleZoom
         ]
         [ clearScreen model.viewSize
-        , renderBoard model.viewport.topLeft model.viewport.zoom model.board
+        , renderBoard cellviews
         ]
 
 
@@ -44,36 +48,14 @@ clearScreen ( width, height ) =
     Canvas.shapes [ Canvas.fill Color.white ] [ Canvas.rect ( 0, 0 ) (toFloat width) (toFloat height) ]
 
 
-renderBoard : ( Float, Float ) -> Float -> List Cell -> Canvas.Renderable
-renderBoard topLeft zoomFactor =
-    Canvas.shapes [ Canvas.fill Color.black ] << renderCells topLeft zoomFactor 0.8
+renderBoard : List CellView -> Canvas.Renderable
+renderBoard =
+    Canvas.shapes [ Canvas.fill Color.black ] << List.map renderCell
 
 
-renderCells : ( Float, Float ) -> Float -> Float -> List Cell -> List Shape
-renderCells topLeft zoomFactor coverage cells =
-    List.filterMap (renderCell topLeft zoomFactor coverage) cells
-
-
-renderCell : ( Float, Float ) -> Float -> Float -> Cell -> Maybe Shape
-renderCell topLeft zoomFactor coverage cell =
-    case cell of
-        Alive pos ->
-            let
-                point =
-                    mapPositionToPoint topLeft zoomFactor pos
-
-                size =
-                    zoomFactor * coverage
-            in
-            Just (Canvas.rect point size size)
-
-        _ ->
-            Nothing
-
-
-mapPositionToPoint : ( Float, Float ) -> Float -> Cell.Position -> Canvas.Point
-mapPositionToPoint ( left, top ) zoomFactor ( x, y ) =
-    ( toFloat x * zoomFactor - left, toFloat y * zoomFactor - top )
+renderCell : CellView -> Shape
+renderCell cv =
+    Canvas.rect cv.pos cv.size cv.size
 
 
 viewToolbar : Model -> Html Msg
@@ -123,6 +105,40 @@ viewStatusBar model =
         , span [] [ text ("Sim. speed: " ++ simSpeed) ]
         , span [] [ text ("Population: " ++ population) ]
         ]
+
+
+
+-- Data
+
+
+type alias CellView =
+    { pos : ( Float, Float )
+    , size : Float
+    }
+
+
+cellView : Viewport -> Cell -> CellView
+cellView { zoom, topLeft } cell =
+    let
+        ( left, top ) =
+            topLeft
+
+        ( x, y ) =
+            Cell.getPos cell
+
+        pos =
+            ( toFloat x * zoom - left, toFloat y * zoom - top )
+
+        size =
+            zoom * 0.8
+    in
+    { pos = pos, size = size }
+
+
+extractCellViews : Viewport -> List Cell -> List CellView
+extractCellViews viewport =
+    List.filter Cell.isAlive
+        >> List.map (cellView viewport)
 
 
 
