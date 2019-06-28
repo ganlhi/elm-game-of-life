@@ -5,6 +5,7 @@ import Browser
 import Browser.Dom
 import Browser.Events
 import Core exposing (Model, Msg(..), Viewport)
+import Randomize exposing (randomizeByDensity)
 import Render
 import Task
 import Time
@@ -99,6 +100,17 @@ update msg model =
 
         Panning panning ->
             ( { model | panning = panning }, Cmd.none )
+
+        Randomize density ->
+            ( model, randomizeByDensity ( 50, 50 ) density )
+
+        InsertRandomPattern ( width, _ ) values ->
+            let
+                newBoard =
+                    Board.generateFromList width values
+                        |> Board.mergeInto model.board
+            in
+            ( { model | board = newBoard }, Cmd.none )
 
 
 zoom : Float -> Viewport -> Viewport

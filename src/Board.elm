@@ -1,4 +1,4 @@
-module Board exposing (Board, evolve, generateFromPattern, getPopulation, toggleCell)
+module Board exposing (Board, evolve, generateFromList, generateFromPattern, getAliveCells, getPopulation, mergeInto, toggleCell)
 
 import Cell exposing (Cell(..))
 import Patterns
@@ -116,3 +116,36 @@ generateFromPattern ( offsetX, offsetY ) patternName =
         |> Maybe.withDefault []
         |> List.map (\pos -> Tuple.mapBoth ((+) offsetX) ((+) offsetY) pos)
         |> List.map (\pos -> Alive pos)
+
+
+generateFromList : Int -> List Bool -> Board
+generateFromList rowWidth values =
+    values |> List.indexedMap (mapIndexedBoolToCell rowWidth)
+
+
+mapIndexedBoolToCell : Int -> Int -> Bool -> Cell
+mapIndexedBoolToCell rowWidth index isAlive =
+    let
+        pos =
+            ( modBy rowWidth index, index // rowWidth )
+    in
+    if isAlive then
+        Alive pos
+
+    else
+        Dead pos
+
+
+mergeInto : Board -> Board -> Board
+mergeInto dest src =
+    let
+        srcAlive =
+            getAliveCells src
+
+        srcPositions =
+            List.map Cell.getPos srcAlive
+
+        destFiltered =
+            dest |> List.filter (\c -> not <| List.member (Cell.getPos c) srcPositions)
+    in
+    destFiltered ++ srcAlive

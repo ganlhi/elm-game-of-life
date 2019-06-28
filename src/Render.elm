@@ -64,6 +64,7 @@ viewToolbar model =
         [ button [ Events.onClick Evolve ] [ text "Evolve!" ]
         , button [ Events.onClick Reset ] [ text "Reset" ]
         , viewSpeedButtons model.simSpeed
+        , viewRandomizeButtons
         ]
 
 
@@ -75,6 +76,14 @@ viewSpeedButtons speed =
         , viewSpeedButton speed 1
         , viewSpeedButton speed 10
         , viewSpeedButton speed 50
+        ]
+
+
+viewRandomizeButtons : Html Msg
+viewRandomizeButtons =
+    fieldset []
+        [ legend [] [ text "Randomize" ]
+        , button [ Events.onClick (Randomize 0.6) ] [ text "Random 60%" ]
         ]
 
 

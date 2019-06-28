@@ -32,3 +32,5 @@ type Msg
     | ToggleCell ( Int, Int )
     | Panning Bool
     | Movement ( Float, Float )
+    | Randomize Float
+    | InsertRandomPattern ( Int, Int ) (List Bool)
