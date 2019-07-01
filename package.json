@@ -6,7 +6,8 @@
   "scripts": {
     "start": "parcel public/index.html",
     "build": "rm -rf dist && parcel build public/index.html --public-url /elm-game-of-life",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "test": "elm-test"
   },
   "repository": {
     "type": "git",
