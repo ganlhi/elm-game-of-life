@@ -1,4 +1,7 @@
-module Patterns exposing (Pattern, all, get)
+module Patterns exposing (Pattern, all, generateBoard, get)
+
+import Board3 exposing (Board)
+import RLE
 
 
 type alias Pattern =
@@ -19,3 +22,11 @@ all =
 get : String -> Maybe Pattern
 get name =
     List.filter (\p -> p.name == name) all |> List.head
+
+
+generateBoard : ( Int, Int ) -> String -> Board
+generateBoard ( offsetX, offsetY ) patternName =
+    get patternName
+        |> Maybe.map (\{ rle } -> rle)
+        |> Maybe.map RLE.decode
+        |> Maybe.withDefault []

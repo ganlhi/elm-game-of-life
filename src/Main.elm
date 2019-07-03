@@ -1,10 +1,11 @@
 module Main exposing (main)
 
-import Board exposing (Board)
+import Board3 exposing (Board)
 import Browser
 import Browser.Dom
 import Browser.Events
 import Core exposing (Model, Msg(..), Viewport)
+import Patterns
 import Randomize exposing (randomizeByDensity)
 import Render
 import Task
@@ -47,7 +48,7 @@ initialModel =
 
 initialBoard : Board
 initialBoard =
-    Board.generateFromPattern ( 10, 10 ) "Octagon2"
+    Patterns.generateBoard ( 10, 10 ) "Octagon2"
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,7 +69,7 @@ update msg model =
         Evolve ->
             let
                 newBoard =
-                    Board.evolve model.board
+                    Board3.evolve model.board
             in
             ( { model
                 | generation = model.generation + 1
@@ -93,7 +94,7 @@ update msg model =
             ( { model | viewport = model.viewport |> zoom 0.9 }, Cmd.none )
 
         ToggleCell pos ->
-            ( { model | board = Board.toggleCell pos model.board }, Cmd.none )
+            ( { model | board = Board3.toggleCell pos model.board }, Cmd.none )
 
         Movement mv ->
             ( { model | viewport = model.viewport |> pan mv }, Cmd.none )
@@ -107,8 +108,7 @@ update msg model =
         InsertRandomPattern ( width, _ ) values ->
             let
                 newBoard =
-                    Board.generateFromList width values
-                        |> Board.mergeInto model.board
+                    Board3.generateFromList ( 0, 0 ) width values
             in
             ( { model | board = newBoard }, Cmd.none )
 

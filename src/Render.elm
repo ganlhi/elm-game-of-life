@@ -1,8 +1,7 @@
 module Render exposing (view)
 
-import Board exposing (getPopulation)
+import Board3 exposing (Board, Row, getPopulation)
 import Canvas exposing (Shape)
-import Cell exposing (Cell(..))
 import Color
 import Core exposing (Model, Msg(..), Viewport)
 import Html exposing (Html, button, div, fieldset, footer, legend, span, text)
@@ -38,9 +37,7 @@ viewBoard model =
         , panHandler model.panning
         , Wheel.onWheel handleZoom
         ]
-        [ clearScreen model.viewSize
-        , renderBoard cellviews
-        ]
+        (clearScreen model.viewSize :: renderBoard cellviews)
 
 
 clearScreen : ( Int, Int ) -> Canvas.Renderable
@@ -48,9 +45,18 @@ clearScreen ( width, height ) =
     Canvas.shapes [ Canvas.fill Color.white ] [ Canvas.rect ( 0, 0 ) (toFloat width) (toFloat height) ]
 
 
-renderBoard : List CellView -> Canvas.Renderable
-renderBoard =
-    Canvas.shapes [ Canvas.fill Color.black ] << List.map renderCell
+renderBoard : List CellView -> List Canvas.Renderable
+renderBoard cells =
+    let
+        livings =
+            cells |> List.filter .alive
+
+        deads =
+            cells |> List.filter (not << .alive)
+    in
+    [ livings |> List.map renderCell |> Canvas.shapes [ Canvas.fill Color.black ]
+    , deads |> List.map renderCell |> Canvas.shapes [ Canvas.fill Color.white, Canvas.stroke Color.gray ]
+    ]
 
 
 renderCell : CellView -> Shape
@@ -107,7 +113,7 @@ viewStatusBar model =
                     "x" ++ String.fromInt s
 
         population =
-            String.fromInt (Board.getPopulation model.board)
+            String.fromInt (getPopulation model.board)
     in
     footer []
         [ span [] [ text ("Generation: " ++ generation) ]
@@ -123,17 +129,15 @@ viewStatusBar model =
 type alias CellView =
     { pos : ( Float, Float )
     , size : Float
+    , alive : Bool
     }
 
 
-cellView : Viewport -> Cell -> CellView
-cellView { zoom, topLeft } cell =
+cellView : Viewport -> Bool -> Int -> Int -> CellView
+cellView { zoom, topLeft } alive y x =
     let
         ( left, top ) =
             topLeft
-
-        ( x, y ) =
-            Cell.getPos cell
 
         pos =
             ( toFloat x * zoom - left, toFloat y * zoom - top )
@@ -141,13 +145,18 @@ cellView { zoom, topLeft } cell =
         size =
             zoom * 0.8
     in
-    { pos = pos, size = size }
+    { pos = pos, size = size, alive = alive }
 
 
-extractCellViews : Viewport -> List Cell -> List CellView
+rowCellViews : Viewport -> Row -> List CellView
+rowCellViews viewport { index, cells } =
+    cells |> List.map (cellView viewport True index)
+
+
+extractCellViews : Viewport -> Board -> List CellView
 extractCellViews viewport =
-    List.filter Cell.isAlive
-        >> List.map (cellView viewport)
+    List.map (rowCellViews viewport)
+        >> List.foldr (++) []
 
 
 

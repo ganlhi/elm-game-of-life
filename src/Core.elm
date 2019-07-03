@@ -1,6 +1,6 @@
 module Core exposing (Model, Msg(..), Viewport)
 
-import Board exposing (Board)
+import Board3 exposing (Board)
 import Browser.Dom
 
 

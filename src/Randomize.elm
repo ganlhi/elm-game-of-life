@@ -1,6 +1,5 @@
 module Randomize exposing (randomizeByDensity)
 
-import Cell exposing (Cell(..))
 import Core exposing (Msg(..))
 import Random
 import Random.List exposing (shuffle)

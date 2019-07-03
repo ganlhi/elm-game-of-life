@@ -3,7 +3,7 @@ module Board2Tests exposing (cellsWorldPositions, evolve, expand, fromWorldPosit
 import Array
 import Board2 exposing (Board)
 import Expect
-import Test exposing (Test, describe, skip, test)
+import Test exposing (Test, describe, test)
 
 
 expand : Test
@@ -103,6 +103,47 @@ trim =
                         }
                 in
                 expandedBoard |> Board2.trim |> Expect.equal trimmedBoard
+        , test "trims a board with empty top and bottom" <|
+            \_ ->
+                let
+                    expandedCells =
+                        [ 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 1
+                        , 0
+                        , 1
+                        , 0
+                        , 1
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        , 0
+                        ]
+
+                    expandedBoard =
+                        { topLeft = ( 0, 1 )
+                        , width = 3
+                        , cells =
+                            Array.fromList expandedCells
+                        }
+
+                    trimmedBoard =
+                        { topLeft = ( 0, 3 )
+                        , width = 3
+                        , cells = Array.fromList [ 1, 0, 1, 0, 1, 0 ]
+                        }
+                in
+                expandedBoard |> Board2.trim |> Expect.equal trimmedBoard
         ]
 
 
@@ -179,7 +220,7 @@ cellsWorldPositions =
                         }
                 in
                 Board2.cellsWorldPositions board
-                    |> Expect.equalLists [ ( 2, 2 ), ( 1, 3 ), ( 2, 3 ), ( 3, 3 ), ( 2, 4 ), ( 3, 4 ) ]
+                    |> Expect.equalLists [ ( 1, 2, False ), ( 2, 2, True ), ( 3, 2, False ), ( 1, 3, True ), ( 2, 3, True ), ( 3, 3, True ), ( 1, 4, False ), ( 2, 4, True ), ( 3, 4, True ) ]
         ]
 
 

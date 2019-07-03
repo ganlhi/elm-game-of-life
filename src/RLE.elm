@@ -1,16 +1,15 @@
 module RLE exposing (decode, mapMatchToGroup, splitRow)
 
+import Board3 exposing (Board, Row)
 import Regex
 
 
-decode : String -> List ( Int, Int )
+decode : String -> Board
 decode rle =
-    String.split "$" rle
-        |> List.indexedMap splitRow
-        |> List.foldr (++) []
+    String.split "$" rle |> List.indexedMap splitRow
 
 
-splitRow : Int -> String -> List ( Int, Int )
+splitRow : Int -> String -> Row
 splitRow rowIndex row =
     let
         matches =
@@ -20,15 +19,15 @@ splitRow rowIndex row =
         groups =
             matches |> List.map mapMatchToGroup
 
-        rowCells : List Bool
+        rowCells : List Int
         rowCells =
-            groups |> List.map (\( nb, alive ) -> List.repeat nb alive) |> List.foldr (++) []
+            groups
+                |> List.map (\( nb, alive ) -> List.repeat nb alive) |> List.foldr (++) []
+                |> List.indexedMap
+                    (\colIndex alive -> if alive then Just colIndex else Nothing)
+                |> List.filterMap identity
     in
-    rowCells
-        |> List.indexedMap
-            (\colIndex alive -> ( colIndex, rowIndex, alive ))
-        |> List.filter (\( _, _, alive ) -> alive)
-        |> List.map (\( x, y, _ ) -> ( x, y ))
+    { index = rowIndex, cells = rowCells }
 
 
 mapMatchToGroup : Regex.Match -> ( Int, Bool )
