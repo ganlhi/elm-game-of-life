@@ -1,4 +1,4 @@
-module Board3Tests exposing (suite)
+module BoardTests exposing (suite)
 
 import Board exposing (Board)
 import Expect

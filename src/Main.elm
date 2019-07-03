@@ -2,13 +2,10 @@ module Main exposing (main)
 
 import Board exposing (Board)
 import Browser
-import Browser.Dom
-import Browser.Events
 import Core exposing (Model, Msg(..), Viewport)
 import Patterns
 import Randomize exposing (randomizeByDensity)
 import Render
-import Task
 import Time
 
 
@@ -16,7 +13,7 @@ import Time
 -- PROGRAM
 
 
-main : Program () Model Msg
+main : Program ( Int, Int ) Model Msg
 main =
     Browser.element { init = init, view = Render.view, update = update, subscriptions = subscriptions }
 
@@ -25,25 +22,25 @@ main =
 -- APP STATE
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( initialModel, getViewportTask )
+init : ( Int, Int ) -> ( Model, Cmd Msg )
+init viewSize =
+    ( initialModel viewSize, Cmd.none )
 
 
-getViewportTask : Cmd Msg
-getViewportTask =
-    Task.perform GotDomViewport Browser.Dom.getViewport
-
-
-initialModel : Model
-initialModel =
+initialModel : ( Int, Int ) -> Model
+initialModel viewSize =
     { generation = 0
     , board = initialBoard
     , simSpeed = 0
-    , viewSize = ( 800, 600 )
-    , viewport = { zoom = 10, topLeft = ( 0, 0 ) }
+    , viewSize = viewSize
+    , viewport = { zoom = 10, topLeft = getViewportOffset viewSize }
     , panning = False
     }
+
+
+getViewportOffset : ( Int, Int ) -> ( Float, Float )
+getViewportOffset ( width, height ) =
+    ( toFloat -width / 2, toFloat -height / 2 )
 
 
 initialBoard : Board
@@ -81,12 +78,6 @@ update msg model =
         SetSpeed speed ->
             ( { model | simSpeed = speed }, Cmd.none )
 
-        ResizeView ->
-            ( model, getViewportTask )
-
-        GotDomViewport { viewport } ->
-            ( { model | viewSize = ( floor viewport.width - 20, floor viewport.height - 20 ) }, Cmd.none )
-
         ZoomIn ->
             ( { model | viewport = model.viewport |> zoom 1.1 }, Cmd.none )
 
@@ -105,10 +96,10 @@ update msg model =
         Randomize density ->
             ( model, randomizeByDensity ( 50, 50 ) density )
 
-        InsertRandomPattern ( width, _ ) values ->
+        InsertRandomPattern ( width, height ) values ->
             let
                 newBoard =
-                    Board.generateFromList ( 0, 0 ) width values
+                    Board.generateFromList ( -width // 2, -height // 2 ) width values
             in
             ( { model | board = newBoard }, Cmd.none )
 
@@ -137,12 +128,7 @@ subscriptions { simSpeed } =
 
                 speed ->
                     Time.every (1000 / toFloat speed) (\_ -> Evolve)
-
-        windowResizeSub : Sub Msg
-        windowResizeSub =
-            Browser.Events.onResize (\_ _ -> ResizeView)
     in
     Sub.batch
         [ autorunSub
-        , windowResizeSub
         ]

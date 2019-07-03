@@ -25,8 +25,6 @@ type Msg
     | Evolve
     | Reset
     | SetSpeed Int
-    | ResizeView
-    | GotDomViewport Browser.Dom.Viewport
     | ZoomIn
     | ZoomOut
     | ToggleCell ( Int, Int )
