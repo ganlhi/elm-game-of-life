@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Board3 exposing (Board)
+import Board exposing (Board)
 import Browser
 import Browser.Dom
 import Browser.Events
@@ -69,7 +69,7 @@ update msg model =
         Evolve ->
             let
                 newBoard =
-                    Board3.evolve model.board
+                    Board.evolve model.board
             in
             ( { model
                 | generation = model.generation + 1
@@ -94,7 +94,7 @@ update msg model =
             ( { model | viewport = model.viewport |> zoom 0.9 }, Cmd.none )
 
         ToggleCell pos ->
-            ( { model | board = Board3.toggleCell pos model.board }, Cmd.none )
+            ( { model | board = Board.toggleCell pos model.board }, Cmd.none )
 
         Movement mv ->
             ( { model | viewport = model.viewport |> pan mv }, Cmd.none )
@@ -108,7 +108,7 @@ update msg model =
         InsertRandomPattern ( width, _ ) values ->
             let
                 newBoard =
-                    Board3.generateFromList ( 0, 0 ) width values
+                    Board.generateFromList ( 0, 0 ) width values
             in
             ( { model | board = newBoard }, Cmd.none )
 

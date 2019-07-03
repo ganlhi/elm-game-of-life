@@ -1,6 +1,6 @@
 module Render exposing (view)
 
-import Board3 exposing (Board, Row, getPopulation)
+import Board exposing (Board, Row, getPopulation)
 import Canvas exposing (Shape)
 import Color
 import Core exposing (Model, Msg(..), Viewport)

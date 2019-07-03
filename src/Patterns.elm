@@ -1,6 +1,6 @@
 module Patterns exposing (Pattern, all, generateBoard, get)
 
-import Board3 exposing (Board)
+import Board exposing (Board)
 import RLE
 
 

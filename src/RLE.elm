@@ -1,6 +1,6 @@
 module RLE exposing (decode, mapMatchToGroup, splitRow)
 
-import Board3 exposing (Board, Row)
+import Board exposing (Board, Row)
 import Regex
 
 
@@ -22,9 +22,16 @@ splitRow rowIndex row =
         rowCells : List Int
         rowCells =
             groups
-                |> List.map (\( nb, alive ) -> List.repeat nb alive) |> List.foldr (++) []
+                |> List.map (\( nb, alive ) -> List.repeat nb alive)
+                |> List.foldr (++) []
                 |> List.indexedMap
-                    (\colIndex alive -> if alive then Just colIndex else Nothing)
+                    (\colIndex alive ->
+                        if alive then
+                            Just colIndex
+
+                        else
+                            Nothing
+                    )
                 |> List.filterMap identity
     in
     { index = rowIndex, cells = rowCells }

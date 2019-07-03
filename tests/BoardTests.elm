@@ -1,6 +1,6 @@
 module Board3Tests exposing (suite)
 
-import Board3 exposing (Board)
+import Board exposing (Board)
 import Expect
 import Test exposing (Test, describe, test)
 
@@ -32,13 +32,13 @@ suite =
             , { index = 2, cells = [ 1, 3 ] }
             ]
     in
-    describe "Board3"
+    describe "Board"
         [ describe "createMirror"
             [ test "makes a mirror board reprensenting dead cells" <|
-                \_ -> Board3.createMirror board |> Expect.equalLists mirror
+                \_ -> Board.createMirror board |> Expect.equalLists mirror
             ]
         , describe "evolve"
             [ test "computes next generation" <|
-                \_ -> Board3.evolve board |> Expect.equal evolvedBoard
+                \_ -> Board.evolve board |> Expect.equal evolvedBoard
             ]
         ]
