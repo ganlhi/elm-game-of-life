@@ -1,5 +1,8 @@
 # elm-game-of-life
 
+## Live demo: 
+https://ganlhi.github.io/elm-game-of-life/
+
 ## Start in dev mode
 
 ```
